@@ -8,7 +8,6 @@ An intelligent Tampermonkey/Greasemonkey script designed to streamline the anime
 ## Table of Contents
 
 *   [Features](#features)
-*   [Installation](#installation)
 *   [Usage](#usage)
     *   [General Flow](#general-flow)
     *   [Settings Menu](#settings-menu)
@@ -19,7 +18,6 @@ An intelligent Tampermonkey/Greasemonkey script designed to streamline the anime
 *   [Supported Domains](#supported-domains)
 *   [Troubleshooting](#troubleshooting)
 *   [Contribution & Support](#contribution--support)
-*   [License](#license)
 *   [Disclaimer](#disclaimer)
 
 ---
