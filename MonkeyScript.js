@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Animepahe · Pahe · Kwik (Batch Download)
 // @namespace    https://PHCorner.net/
-// @version      0.2.3
+// @version      0.2.4
 // @downloadURL  https://raw.githubusercontent.com/Ysilven/animepahe-auto-download-script/main/Animepahe%20%C2%B7%20Pahe%20%C2%B7%20Kwik.js
 // @updateURL    https://raw.githubusercontent.com/Ysilven/animepahe-auto-download-script/main/Animepahe%20%C2%B7%20Pahe%20%C2%B7%20Kwik.js
 // @description  Auto download script for Animepahe with batch episode range support.
@@ -14,6 +14,7 @@
 // @match        https://animepahe.ru/*
 // @match        https://animepahe.org/*
 // @match        https://animepahe.com/*
+// @match        https://animepahe.si/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=animepahe.ru
 // @grant        none
 // ==/UserScript==
@@ -717,3 +718,4 @@
         return [...episodes];
     }
 })();
+
