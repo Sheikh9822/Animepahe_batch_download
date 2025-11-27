@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name         Animepahe · Pahe · Kwik (Batch Download)
+// @name         Animepahe · Pahe · Kwik (Batch Download) - Original UI + Safe Fixes
 // @namespace    https://PHCorner.net/
-// @version      0.2.5
-// @downloadURL  https://raw.githubusercontent.com/Ysilven/animepahe-auto-download-script/main/Animepahe%20%C2%B7%20Pahe%20%C2%B7%20Kwik.js
-// @updateURL    https://raw.githubusercontent.com/Ysilven/animepahe-auto-download-script/main/Animepahe%20%C2%B7%20Pahe%20%C2%B7%20Kwik.js
-// @description  Auto download script for Animepahe with batch episode range support.
-// @author       Arjien Ysilven (modified by ChatGPT and AI)
+// @version      0.3.2
+// @downloadURL  https://example.invalid/Animepahe%20%C2%B7%20Pahe%20%C2%B7%20Kwik.js
+// @updateURL    https://example.invalid/Animepahe%20%C2%B7%20Pahe%20%C2%B7%20Kwik.js
+// @description  Original UI preserved. Safe fixes for kwik/thum.io redirects, pahe.win extraction, and robustness improvements. Does NOT bypass protected hosts or captchas.
+// @author       Arjien Ysilven (modified by ChatGPT & AI)
 // @match        https://pahe.win/*
 // @match        https://kwik.si/f/*
 // @match        https://kwik.si/d/*
@@ -22,12 +22,17 @@
 (function() {
     'use strict';
 
+    // Preserve original UI, but integrate safe fixes.
     const url = window.location.href;
     let settings = load_settings();
-    let enable_script = settings['Enable·Script'] ? true : false;
+    let enable_script = !!settings['Enable·Script'];
 
-    // --- Main Script Logic ---
-    const animepaheDomainRegex = /animepahe\.(ru|org|com|si)/;
+    // --- DOM helpers ---
+    function $q(sel, root = document) { try { return root.querySelector(sel); } catch (e) { return null; } }
+    function $qa(sel, root = document) { try { return Array.from(root.querySelectorAll(sel)); } catch (e) { return []; } }
+
+    // --- Routing (same logic as original) ---
+    const animepaheDomainRegex = /animepahe\.(ru|org|com|si)/i;
 
     switch (true) {
         case animepaheDomainRegex.test(url) && (url.endsWith('/') || url.includes('?page=')):
@@ -60,7 +65,7 @@
             console.log('No matches found for URL.');
     }
 
-    // --- Animepahe Play Page Functions ---
+    // --- Original clear_selection (preserve UI) ---
     function clear_selection() {
         let a = document.getElementById('pickDownload');
         if (!a) return;
@@ -71,8 +76,9 @@
         }
     }
 
+    // --- Play page script (modernized internals, original UI preserved) ---
     function script() {
-        console.log('Animepahe · Pahe · Kwik', 'v0.2.5');
+        console.log('Animepahe · Pahe · Kwik', 'v0.3.2');
 
         let index = settings['Resolution·Value'];
         let sub_dub = settings['Subtitle·Dubbed'];
@@ -81,7 +87,7 @@
 
         let expand_menu = document.getElementById('downloadMenu');
         if (expand_menu && expand_menu.getAttribute('aria-expanded') == 'false') {
-            expand_menu.click();
+            try { expand_menu.click(); } catch (e) { /* ignore */ }
         }
 
         let pickDownloadDiv = document.getElementById('pickDownload');
@@ -94,7 +100,7 @@
             return {
                 index: index + 1,
                 href: link.href,
-                text: link.textContent
+                text: link.textContent ? link.textContent.trim() : ''
             };
         });
 
@@ -104,7 +110,7 @@
         let dub = links.filter(link => link.text.toLowerCase().includes('eng-dub'));
 
         let resolutions = { 1: '360p', 2: '720p', 3: '1080p' };
-        let res_checker = (sub_dub ? sub : dub).some(link => link.text.toLowerCase().includes(resolutions[index].toLowerCase()));
+        let res_checker = (sub_dub ? sub : dub).some(link => link.text.toLowerCase().includes(resolutions[index] ? resolutions[index].toLowerCase() : ''));
 
         if (resolution_checker) {
             if (index > 3 || all_links) {
@@ -190,7 +196,7 @@
         }
     }
 
-    // --- Menu and Settings Functions ---
+    // --- Menu and Settings Functions (original UI preserved) ---
     function menu(type) {
         let li = Object.assign(document.createElement('li'), { className: 'nav-item' });
         let a = Object.assign(li.appendChild(document.createElement('a')), {
@@ -224,7 +230,7 @@
             }
         }
         toggle(media);
-        media.addListener(toggle);
+        if (media.addListener) media.addListener(toggle);
 
         let initialSettings = load_settings();
         if (initialSettings['Expand·Menu']) {
@@ -242,7 +248,7 @@
                     open_menu();
                 }
                 toggle(media);
-                media.addListener(toggle);
+                if (media.addListener) media.addListener(toggle);
             }
         });
 
@@ -395,80 +401,131 @@
         }
     }
 
-    // --- Settings Management ---
+    // --- Settings Management (original logic) ---
     function load_settings() {
         let settings = localStorage.getItem('animepahe_settings');
         if (settings) {
-            return JSON.parse(settings);
-        } else {
-            console.log('Loading default settings');
-            settings = {
-                'Enable·Script': true,
-                'Resolution·Value': 2,
-                'Subtitle·Dubbed': true,
-                'Resolution·Checker': false,
-                'All·Links': false,
-                'Expand·Menu': false,
-            };
-            localStorage.setItem('animepahe_settings', JSON.stringify(settings));
-            return settings;
+            try {
+                return JSON.parse(settings);
+            } catch (e) {
+                console.warn('Failed to parse saved settings, resetting to defaults.', e);
+            }
         }
+        console.log('Loading default settings');
+        settings = {
+            'Enable·Script': true,
+            'Resolution·Value': 2,
+            'Subtitle·Dubbed': true,
+            'Resolution·Checker': false,
+            'All·Links': false,
+            'Expand·Menu': false,
+        };
+        try { localStorage.setItem('animepahe_settings', JSON.stringify(settings)); } catch (e) { /* ignore */ }
+        return settings;
     }
 
     function save_settings(settings) {
         console.log('Saving settings');
-        localStorage.setItem('animepahe_settings', JSON.stringify(settings));
+        try { localStorage.setItem('animepahe_settings', JSON.stringify(settings)); } catch (e) { console.error('Failed to save settings', e); }
     }
 
-    // --- Pahe.win Redirect ---
+    // --- Pahe.win Redirect (improved extraction) ---
     function pahe_win() {
-        const scriptTag = document.querySelector('script');
-        if (scriptTag) {
-            const content = scriptTag.textContent;
-            const link = content.match(/https?:\/\/[^'"]+/);
-            if (link) {
-                window.location.href = link[0];
-                return;
-            }
+        // Try to find kwik link inside scripts (robust search)
+        const scripts = document.getElementsByTagName('script');
+        for (let i = 0; i < scripts.length; i++) {
+            try {
+                const content = scripts[i].textContent || '';
+                // match kwik.si or kwik.cx links used by pahe.win
+                const match = content.match(/https?:\/\/kwik\.(?:si|cx)\/[fd]\/[A-Za-z0-9_-]{6,}/i);
+                if (match && match[0]) {
+                    window.location.href = match[0];
+                    return;
+                }
+            } catch (e) { /* ignore malformed scripts */ }
         }
-        console.log("No redirect link found on pahe.win. Reloading.");
-        setInterval(() => window.location.reload(), 3000);
+
+        console.log("No redirect link found on pahe.win. Will retry a few times then reload.");
+
+        // Sometimes the link is injected after a delay; retry a few times
+        let attempts = 0;
+        const id = setInterval(() => {
+            attempts++;
+            for (let i = 0; i < scripts.length; i++) {
+                try {
+                    const content = scripts[i].textContent || '';
+                    const match = content.match(/https?:\/\/kwik\.(?:si|cx)\/[fd]\/[A-Za-z0-9_-]{6,}/i);
+                    if (match && match[0]) {
+                        clearInterval(id);
+                        window.location.href = match[0];
+                        return;
+                    }
+                } catch (e) {}
+            }
+            if (attempts > 8) {
+                clearInterval(id);
+                console.warn('pahe.win: giving up after multiple attempts.');
+                // fallback: reload occasionally to see if dynamic content appears
+                setInterval(() => window.location.reload(), 3000);
+            }
+        }, 700);
     }
 
-    // --- Kwik Redirect Functions ---
+    // --- Kwik Redirect Functions (safe) ---
+    // Use HEAD + manual redirect to avoid thum.io thumbnails and detect kwik redirects safely.
     async function process_link(link) {
         try {
-            console.log('Fetching link: kwik');
+            console.log('Fetching link: kwik (HEAD, manual redirect)');
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
-            let response = await fetch(link + '/i', { signal: controller.signal });
+
+            // HEAD prevents some hosts from returning large bodies; redirect: "manual" prevents auto-following
+            let response = await fetch(link + '/i', { method: 'HEAD', redirect: 'manual', signal: controller.signal });
             clearTimeout(timeoutId);
 
-            if (response.redirected) {
-                let url = response.url;
-                if (url.includes('kwik.')) {
-                    return url;
-                }
+            // Get Location header, if present
+            const location = response.headers.get('location') || response.headers.get('Location') || null;
+            if (!location) {
+                console.warn('process_link: no Location header present.');
+                return null;
             }
+
+            // Reject thum.io/image.thum.io hijacks
+            if (location.includes('thum.io') || location.includes('image.thum.io')) {
+                console.warn('Blocked thum.io redirect:', location);
+                return null;
+            }
+
+            // Accept only kwik domains for auto-redirect safety
+            if (!/kwik\.(si|cx)/i.test(location)) {
+                console.warn('Unexpected redirect target domain; ignoring:', location);
+                return null;
+            }
+
+            return location;
         } catch (error) {
-            console.error('Error fetching link for kwik:', error);
+            if (error && error.name === 'AbortError') {
+                console.warn('process_link: request timed out.');
+            } else {
+                console.error('Error fetching kwik link:', error);
+            }
+            return null;
         }
-        return null;
     }
 
     async function pahe_win_x(link) {
         try {
             let url = await process_link(link);
-            let enable_script = load_settings()['Enable·Script'];
+            let enable_script_local = load_settings()['Enable·Script'];
 
-            if (url && enable_script) {
+            if (url && enable_script_local) {
                 console.log('Redirecting to:', url);
                 window.location.href = url;
             } else if (!url) {
-                console.log('Could not process kwik link. Falling back to original link.');
+                console.log('Could not process kwik link safely. Navigating to the original link for manual handling.');
                 window.location.href = link;
             } else {
-                console.log('Script is disabled, not redirecting.');
+                console.log('Script disabled, not redirecting.');
             }
         } catch (error) {
             console.error('Unexpected error in pahe_win_x:', error);
@@ -479,14 +536,19 @@
     function kwik() {
         const form = document.querySelector('form');
         if (form) {
-            form.submit();
+            try {
+                form.submit();
+            } catch (e) {
+                console.warn("Auto-submit of kwik form failed; user interaction may be required.", e);
+                // Do not attempt to bypass protections; let user click if needed.
+            }
         } else {
-            console.log("No form found. Reloading.");
+            console.log("No form found on kwik page. Reloading.");
             setInterval(() => window.location.reload(), 3000);
         }
     }
 
-    // --- Batch Download Functions (for Animepahe Anime Pages) ---
+    // --- Batch Download Functions (original UI preserved) ---
     function setupBatchUI() {
         const interval = setInterval(() => {
             const main = document.querySelector('.content-wrapper');
@@ -585,3 +647,4 @@
         return [...episodes];
     }
 })();
+
